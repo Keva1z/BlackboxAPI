@@ -1,7 +1,10 @@
 import requests
+import re
 from .models import Message, AgentMode, Chat, Model, BLACKBOX
 from .exceptions import APIError
 from .utils import load_cookies, parse_and_save_cookies, validate_cookie
+from .database import DatabaseInterface, DictDatabase
+from typing import Optional, Union
 
 class AIClient:
     """
@@ -14,7 +17,7 @@ class AIClient:
         default_chat (Chat): The default chat.
     """
 
-    def __init__(self, base_url="https://www.blackbox.ai", cookie_file: str|None = None):
+    def __init__(self, base_url="https://www.blackbox.ai", cookie_file: Optional[str] = None, use_chat_history: bool = True, database: Optional[DatabaseInterface] = None):
         """
         Initialize the AIClient with the given base URL and cookie file.
         cookie_file: path to the file with cookies
@@ -51,19 +54,31 @@ class AIClient:
                     else:
                         raise ValueError("Invalid cookie format")
         
-        self.chats = {}
-        self.default_chat = Chat()
+        self.use_chat_history = use_chat_history
+        self.database = database or DictDatabase()
+        
+        # Create completions attribute when initializing
+        self.completions = Completions(self)
 
-    def _get_chat(self, agent_mode: AgentMode|None = None):
-        """
-        Get or create a chat for the given agent mode.
-        agent_mode: AgentMode | None = None
-        """
-        if agent_mode is None:
-            return self.default_chat
-        return self.chats.setdefault(agent_mode.id, Chat())
+    def _get_chat(self, agent_mode: Optional[AgentMode] = None) -> Chat:
+        if not self.use_chat_history:
+            return Chat(self.database)
+        chat_id = agent_mode.id if agent_mode else "default"
+        return self.database.get_or_create_chat(chat_id)
 
-    def generate(self, message: str, agent: AgentMode|None = None, model: Model = BLACKBOX, max_tokens=1024) -> str:
+    def _process_response(self, response_text: str) -> str:
+        """
+        Processes the API response, removing unnecessary links.
+        """
+        # Remove the block of links between $~~~$
+        cleaned_text = re.sub(r'\$~~~\$.*?\$~~~\$', '', response_text, flags=re.DOTALL)
+        
+        # Remove extra spaces and empty lines
+        cleaned_text = '\n'.join(line.strip() for line in cleaned_text.split('\n') if line.strip())
+        
+        return cleaned_text
+
+    def _generate(self, message: str, agent: AgentMode|None = None, model: Model = BLACKBOX, max_tokens=1024) -> str:
         """
         Generate a response from the AI model.
 
@@ -111,26 +126,54 @@ class AIClient:
         response = requests.post(url, headers=self.headers, json=payload)
         
         if response.status_code != 200:
-            raise APIError(f"API вернула код состояния {response.status_code}: {response.content}")
+            raise APIError(f"API returned status code {response.status_code}: {response.content}")
 
         try:
             response_text = response.content.decode('utf-8')
             response_text = ''.join(char for char in response_text if char.isprintable() or char == '\n')
-            chat.add_message(response_text, "assistant")
-            return response_text
+            
+            # Process the response before adding to the chat history
+            processed_response = self._process_response(response_text)
+            
+            chat.add_message(processed_response, "assistant")
+            return processed_response
         except Exception as e:
-            raise APIError("Failed to process the server's response")
+            raise APIError("Failed to process the server response")
 
     def get_chat_history(self, agent: AgentMode|None = None):
         """
         Get the chat history for the given agent mode.
         agent: AgentMode | None = None
         """
-        return self.get_chat(agent).get_messages()
+        chat = self._get_chat(agent)
+        return chat.get_messages()
 
     def clear_chat_history(self, agent: AgentMode|None = None):
         """
         Clear the chat history for the given agent mode.
         agent: AgentMode | None = None
         """
-        self.get_chat(agent).clear_history()
+        chat = self._get_chat(agent)
+        chat.clear_history()
+        self.database.save_chat(chat)
+
+    def delete_chat(self, agent: AgentMode|None = None):
+        """
+        Delete the chat for the given agent mode.
+        agent: AgentMode | None = None
+        """
+        chat_id = agent.id if agent else "default"
+        self.database.delete_chat(chat_id)
+
+    async def _generate_async(self, message: str, agent: Optional[AgentMode] = None, model: Model = BLACKBOX, max_tokens: int = 1024) -> str:
+        raise NotImplementedError("Async generation is not implemented yet")
+
+class Completions:
+    def __init__(self, client: AIClient):
+        self.client = client
+
+    def create(self, message: str, agent: Optional[AgentMode] = None, model: Model = BLACKBOX, max_tokens: int = 1024) -> str:
+        return self.client._generate(message, agent, model, max_tokens)
+
+    async def create_async(self, message: str, agent: Optional[AgentMode] = None, model: Model = BLACKBOX, max_tokens: int = 1024) -> str:
+        return await self.client._generate_async(message, agent, model, max_tokens)

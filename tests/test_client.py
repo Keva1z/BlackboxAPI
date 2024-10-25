@@ -10,11 +10,11 @@ client = AIClient()
 agent_mode = RU_CAN_CODER
 
 # Generate with agent:
-response = client.generate("How do I code the basic HTML website?", agent_mode)
+response = client.completions.create("How do I code the basic HTML website?", agent_mode)
 print("Assistant:", response)
 
 # Generate without agent:
-response = client.generate("Can you show me an example?", agent_mode)
+response = client.completions.create("Can you show me an example?", agent_mode)
 print("Assistant:", response)
 
 # Show chat history for agent:

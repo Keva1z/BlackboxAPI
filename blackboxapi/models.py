@@ -49,15 +49,21 @@ class Chat:
     """Represents a chat session."""
     MAX_MESSAGES = 25
 
-    def __init__(self):
-        """Initialize a new chat session."""
+    def __init__(self, database, chat_id: str = None):
+        """Initialize a new chat session.
+        database: DatabaseInterface | None = None
+        chat_id: str | None = None
+        """
+        self.database = database
         self.messages = deque(maxlen=self.MAX_MESSAGES)
-        self.chat_id = str(uuid.uuid4())
+        self.chat_id = chat_id if chat_id else str(uuid.uuid4())
 
     def add_message(self, content: str, role: str):
         """Add a new message to the chat."""
         message = Message(content=content, role=role, id=self.chat_id)
         self.messages.append(message)
+        if self.database:
+            self.database.save_chat(self)
         return message
 
     def get_messages(self):

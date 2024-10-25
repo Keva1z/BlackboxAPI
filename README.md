@@ -40,7 +40,9 @@ for message in client.get_chat_history():
     print(f"{message.role}: {message.content}")
 ```
 
-- [More examples](tests/test_client.py)
+- [How to get cookie](examples/HowToGetCookie.md)
+- [How to use custom database](examples/HowToDB.md)
+- [More examples](tests/test_dialogue.py)
 - [All agent modes](blackboxapi/agent.py)
 
 ## Configuration
