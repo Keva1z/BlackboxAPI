@@ -15,11 +15,6 @@ BlackboxAPI is a Python library for interacting with the Blackbox AI API. It pro
 You can install BlackboxAPI using pip:
 
 ```bash
-pip install blackboxapi
-```
-or
-
-```bash
 pip install git+https://github.com/Keva1z/BlackboxAPI.git
 ```
 
