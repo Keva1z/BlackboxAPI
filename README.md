@@ -74,20 +74,7 @@ You can use predefined agent modes or create custom ones:
 
 ## API Reference
 
-### AIClient
-
-The main class for interacting with the Blackbox AI API.
-
-#### Methods:
-
-- `generate(message: str, agent_mode: AgentMode|None = None, model: Model = BLACKBOX, max_tokens=1024) -> str`
-  Generate a response from the AI model.
-
-- `get_chat_history(agent_mode: AgentMode|None = None)`
-  Get the chat history for the given agent mode.
-
-- `clear_chat_history(agent_mode: AgentMode|None = None)`
-  Clear the chat history for the given agent mode.
+- [API Reference](examples/ApiReference.md)
 
 ## Contributing
 
