@@ -5,7 +5,7 @@
 ### create
 
 ```python
-# completions.create(message: str, agent: AgentMode | None, model: Model, max_tokens)
+# completions.create(message: str, agent: AgentMode | None, model: Model (default: BLACKBOX), max_tokens)
 # Example:
 client = AIClient()
 agent_mode = RU_CAN_CODER
@@ -59,5 +59,28 @@ client = AIClient()
 client.chat_history.delete_chat()
 ```
 Deletes the chat for the given agent mode.
+
+## Agents
+
+### Create your own agent
+
+```python
+# Create your own agent mode
+# Example:
+from blackboxapi.models import AgentMode
+from blackboxapi.client import AIClient
+
+client = AIClient()
+
+your_agent = AgentMode(
+    mode=True, # This is required, always should be True
+    id="your_agent_id",
+    name="Your Agent Name"
+)
+
+response = client.completions.create("Hello, how are you?", your_agent)
+print(response)
+```
+To get your agent id, go to the [Blackbox AI](https://blackbox.ai/) and create your own agent, then copy the id from the url. It will look like this: `https://blackbox.ai/agent/your_agent_id`.
 
 ## Thats all!
