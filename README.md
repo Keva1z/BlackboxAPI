@@ -31,7 +31,7 @@ client = AIClient() # Initialize the client
 agent_mode = RU_CAN_CODER # Use a specific agent mode
 
 # Generate a response
-response = client.generate("How do I code a basic HTML website?", agent_mode)
+response = client.completions.create("How do I code a basic HTML website?", agent_mode)
 print("Assistant:", response)
 
 print("\nChat History:") # Get chat history
