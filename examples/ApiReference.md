@@ -174,4 +174,4 @@ The following AI models are supported:
 
 ---
 
-<p align="center">Need more examples? Check out the <a href="tests/test_client.py">test files</a>!</p>
+<p align="center">Need more examples? Check out the <a href="https://github.com/Keva1z/BlackboxAPI/tree/main/tests">test files</a>!</p>
