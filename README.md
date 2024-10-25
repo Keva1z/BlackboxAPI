@@ -44,6 +44,7 @@ for message in client.get_chat_history():
 - [How to use custom database](examples/HowToDB.md)
 - [More examples](tests/test_dialogue.py)
 - [All agent modes](blackboxapi/agent.py)
+- [API Reference](examples/ApiReference.md)
 
 ## Configuration
 
