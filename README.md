@@ -1,89 +1,96 @@
-# BlackboxAPI
+# 🤖 BlackboxAPI
 
-BlackboxAPI is a Python library for interacting with the Blackbox AI API. It provides a simple and efficient way to generate responses using various AI models and agent modes.
+A powerful Python library for seamless interaction with the Blackbox AI API. Leverage multiple AI models and agent modes with an elegant, developer-friendly interface.
 
-## Features
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-- Easy-to-use client for Blackbox AI API
-- Support for multiple AI models (GPT-4, Claude, Gemini, Blackbox AI)
-- Customizable agent modes
-- Chat history management
-- Automatic cookie handling and validation
+## ✨ Features
 
-## Installation
+- 🚀 Intuitive and powerful client interface
+- 🤖 Support for multiple AI models (GPT-4, Claude, Gemini, Blackbox AI)
+- 🎭 Customizable agent modes with specialized capabilities
+- 💾 Built-in chat history management
+- 🍪 Automatic cookie handling and validation
+- 🔄 Async support for high-performance applications
 
-You can install BlackboxAPI using pip:
+## 📦 Installation
 
 ```bash
 pip install git+https://github.com/Keva1z/BlackboxAPI.git
 ```
 
-## Usage
-
-Here's a basic example of how to use BlackboxAPI:
+## 🚀 Quick Start
 
 ```python
 from blackboxapi import AIClient, AgentMode
 from blackboxapi.agent import RU_CAN_CODER
 
-client = AIClient() # Initialize the client
+client = AIClient() #Initialize the client
 
-agent_mode = RU_CAN_CODER # Use a specific agent mode
+agent_mode = RU_CAN_CODER # Select an agent mode
+response = client.completions.create(
+    "How do I create a REST API with FastAPI?",
+    agent_mode
+) # Generate a response
 
-# Generate a response
-response = client.completions.create("How do I code a basic HTML website?", agent_mode)
 print("Assistant:", response)
-
-print("\nChat History:") # Get chat history
-
-for message in client.get_chat_history():
+print("\nChat History:") 
+for message in client.get_chat_history(): # Access chat history
     print(f"{message.role}: {message.content}")
 ```
 
-- [How to get cookie](examples/HowToGetCookie.md)
-- [How to use custom database](examples/HowToDB.md)
-- [More examples](tests/test_dialogue.py)
-- [All agent modes](blackboxapi/agent.py)
-- [API Reference](examples/ApiReference.md)
+## 📚 Documentation
 
-## Configuration
+- [🍪 How to Get Cookie](examples/HowToGetCookie.md)
+- [💾 Custom Database Integration](examples/HowToDB.md)
+- [📝 Code Examples](tests/test_dialogue.py)
+- [🎭 Available Agent Modes](blackboxapi/agent.py)
+- [📖 API Reference](examples/ApiReference.md)
 
-BlackboxAPI requires a valid cookie for authentication. You can provide the cookie in two ways:
+## ⚙️ Configuration
 
-1. Create a `cookies.json` file in your project directory with the required cookie information.
-2. When prompted, enter the cookie string manually, and the library will save it for future use.
+BlackboxAPI requires authentication via cookie. Two options are available:
 
-## Available Models
+1. Create a `cookies.json` file in your project directory
+2. Enter the cookie string when prompted (will be saved automatically)
 
-BlackboxAPI supports the following AI models:
+## 🤖 Available Models
 
-- GPT-4o
+- GPT-4
 - Claude
 - Gemini
 - Blackbox AI
 
-## Agent Modes
+## 🎭 Agent Modes
 
-You can use predefined agent modes or create custom ones:
+Specialized agents for different tasks:
 
-- PROMPT_GENERATOR (Generates prompts for other agents)
-- CAN_CODER (Only answer on Russian)
-- MENTAL_ADVISOR (Only answer on Russian)
-- ALGORITHM_EXPLAINER (Only answer on Russian)
-- RELATIONSHIP_COACH (Only answer on Russian)
+- `PROMPT_GENERATOR` - Creates optimized prompts
+- `CAN_CODER` - Russian-speaking coding assistant
+- `MENTAL_ADVISOR` - Russian-speaking mental health advisor
+- `ALGORITHM_EXPLAINER` - Russian-speaking algorithm expert
+- `RELATIONSHIP_COACH` - Russian-speaking relationship advisor
 
-## API Reference
+Create custom agents by extending the `AgentMode` class!
 
-- [API Reference](examples/ApiReference.md)
+## 🤝 Contributing
 
-## Contributing
+Contributions are always welcome! Feel free to:
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create a feature branch
+3. Submit a Pull Request
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgements
+## 🙏 Acknowledgements
 
-- [Blackbox AI](https://www.blackbox.ai) for providing the AI service.
+- [Blackbox AI](https://www.blackbox.ai) for providing the core AI services
+- All contributors who help improve this library
+
+---
+
+<p align="center">Made with ❤️ by Keva1z</p>

@@ -1,100 +1,177 @@
-# API Reference
+# 📚 API Reference
 
-## Completions
+Comprehensive guide to BlackboxAPI's core functionality and features.
 
-### create
+## 🚀 Completions
+
+### create()
+
+**Generate AI responses synchronously.**
+
 
 ```python
-# completions.create(message: str, agent: AgentMode | None, model: Model (default: BLACKBOX), max_tokens)
-# Example:
+# Signature
+
+completions.create(
+    message: str,
+    agent: AgentMode | None,
+    model: Model = BLACKBOX,
+    max_tokens: int | None = None
+) -> str
+```
+
+```
+# Example
+
 client = AIClient()
 agent_mode = RU_CAN_CODER
 
-response: str = client.completions.create("How do I code a basic HTML website?", agent_mode)
+response: str = client.completions.create(
+    "How do I code a basic HTML website?",
+    agent_mode
+)
 print(response)
 ```
-Returns a string with the response from the AI.
 
+### create_async()
 
-### create_async
+**Generate AI responses asynchronously for better performance in async applications.**
 
 ```python
-# completions.create_async(message: str, agent: AgentMode | None, model: Model (default: BLACKBOX), max_tokens)
-# Example:
+# Signature
+
+completions.create_async(
+    message: str,
+    agent: AgentMode | None,
+    model: Model = BLACKBOX,
+    max_tokens: int | None = None
+) -> Coroutine[str]
+```
+
+```
+# Example
+
 import asyncio
 
 client = AIClient()
 agent_mode = RU_CAN_CODER
 
 async def main():
-    response: str = client.completions.create_async("How do I code a basic HTML website?", agent_mode)
+    response: str = await client.completions.create_async(
+        "How do I code a basic HTML website?",
+        agent_mode
+    )
     print(response)
 
 asyncio.run(main())
 ```
-Returns a string with the async response from the AI.
 
-### Create image
+### 🎨 Create Image
 
-When blackbox update their image generations, i'll update this.
+> 🚧 Coming soon! Image generation features will be added when Blackbox updates their API.
 
+## 💬 Chat History
 
-## Chat History
+### get_chat_history()
 
-### get_chat_history
+**Retrieve the conversation history for a specific agent or general chat.**
 
 ```python
-# chat_history.get_chat_history(agent: AgentMode | None)
-# Example:
+# Signature
+
+chat_history.get_chat_history(agent: AgentMode | None = None) -> list[Message]
+```
+
+```
+# Example
+
 client = AIClient()
 
 chat_history: list[Message] = client.chat_history.get_chat_history()
 for message in chat_history:
     print(f"{message.role}: {message.content}")
 ```
-Returns a list of messages from the chat history.
 
-### clear_chat_history
+### clear_chat_history()
+
+**Reset the conversation history for a specific agent or general chat.**
 
 ```python
-# chat_history.clear_chat_history(agent: AgentMode | None)
-# Example:
+# Signature
+
+chat_history.clear_chat_history(agent: AgentMode | None = None) -> None
+```
+
+```
+# Example
+
 client = AIClient()
 client.chat_history.clear_chat_history()
 ```
-Clears the chat history for the given agent mode.
 
-### delete_chat
+### delete_chat()
+
+**Completely remove a chat session for a specific agent or general chat.**
 
 ```python
-# chat_history.delete_chat(agent: AgentMode | None)
-# Example:
+# Signature
+chat_history.delete_chat(agent: AgentMode | None = None) -> None
+```
+
+```
+# Example
+
 client = AIClient()
 client.chat_history.delete_chat()
 ```
-Deletes the chat for the given agent mode.
 
-## Agents
+## 🤖 Custom Agents
 
-### Create your own agent
+### Creating Custom Agents
+
+**Extend BlackboxAPI's capabilities by creating your own specialized agents.**
 
 ```python
-# Create your own agent mode
-# Example:
+# Example
 from blackboxapi.models import AgentMode
 from blackboxapi.client import AIClient
 
 client = AIClient()
 
 your_agent = AgentMode(
-    mode=True, # This is required, always should be True
+    mode=True,  # Required, always set to True
     id="your_agent_id",
     name="Your Agent Name"
 )
 
-response = client.completions.create("Hello, how are you?", your_agent)
+response = client.completions.create(
+    "Hello, how are you?",
+    your_agent
+)
 print(response)
 ```
-To get your agent id, go to the [Blackbox AI](https://blackbox.ai/) and create your own agent, then copy the id from the url. It will look like this: `https://blackbox.ai/agent/your_agent_id`.
 
-## Thats all!
+To obtain your agent ID:
+1. Visit [Blackbox AI](https://blackbox.ai/)
+2. Create a new agent
+3. Copy the ID from the URL: `https://blackbox.ai/agent/your_agent_id`
+
+## 🔑 Available Models
+
+The following AI models are supported:
+
+- `GPT4` - OpenAI's GPT-4
+- `CLAUDE` - Anthropic's Claude
+- `GEMINI` - Google's Gemini Pro
+- `BLACKBOX` - Blackbox AI (default)
+
+## 📌 Important Notes
+
+- Always handle API responses with proper error checking
+- Consider rate limits and token usage
+- Store sensitive information (like cookies) securely
+- Use async methods for better performance in web applications
+
+---
+
+<p align="center">Need more examples? Check out the <a href="tests/test_client.py">test files</a>!</p>

@@ -1,55 +1,83 @@
-# How to get a cookie for BlackboxAPI
+# 🍪 Getting Started with BlackboxAPI Authentication
 
-To use BlackboxAPI, you need a valid cookie from the blackbox.ai website. Here is a step-by-step guide to obtaining the necessary cookie:
+A comprehensive guide to obtaining and configuring your authentication cookie for BlackboxAPI.
 
-1. Open a web browser and navigate to the [blackbox.ai](https://www.blackbox.ai) website.
+## 🔑 Prerequisites
 
-2. Log in to your account if you haven't already.
+- A web browser (Chrome, Firefox, Safari, or Edge)
+- A registered account on [Blackbox AI](https://www.blackbox.ai)
 
-3. Open the developer tools in your browser:
-   - For Chrome/Edge: press F12 or right-click -> "View code"
-   - For Firefox: press F12 or menu -> Web Development -> Web Developer Tools
-   - For Safari: enable the "Develop" menu in settings, then select "Show Web Inspector"
+## 🚀 Step-by-Step Guide
 
-4. Go to the "Network" tab in the developer tools.
+### 1️⃣ Access the Platform
 
-5. Clear the current records in the Network panel by clicking the clear icon or pressing Ctrl+L (Cmd+K on Mac).
+1. Navigate to [blackbox.ai](https://www.blackbox.ai)
+2. Log in to your account
 
-6. Send any message in the chat on the blackbox.ai website.
+### 2️⃣ Open Developer Tools
 
-7. In the Network panel, find the request with the name "chat".
+Choose your browser:
 
-8. Select this request and go to the "Headers" tab.
+- **Chrome/Edge**: `F12` or Right-click → "View code"
+- **Firefox**: `F12` or Menu → Web Development → Web Developer Tools
+- **Safari**: Enable "Develop" menu in settings → Show Web Inspector
 
-9. Scroll down to the "Request Headers" section.
+### 3️⃣ Capture the Cookie
 
-10. Find the line starting with "cookie:".
+1. Select the "Network" tab in Developer Tools
+2. Clear existing records (`Ctrl+L` or `Cmd+K` on Mac)
+3. Send any message in the Blackbox AI chat
+4. Find the request named "chat"
+5. Go to "Headers" tab
+6. Locate "Request Headers"
+7. Find the line starting with "cookie:"
+8. Copy the value starting with `sessionId=`
 
-11. Copy the cookie value that starts with "sessionId=..." and ends before the next header.
-
-Example cookie may look like this:
-
-```
+Example format:
+```bash
 sessionId=abc123...xyz789
 ```
 
-12. Save this cookie value - it will be needed to configure BlackboxAPI.
-
-**Important:** Never share your cookie with others, as it provides access to your account.
-
-## Using the cookie in BlackboxAPI
-
-After obtaining the cookie, you need to write it when you first run BlackboxAPI `AIClient`:
-
 ```python
 client = AIClient()
-# When you run it, you will be prompted to enter the cookie, it will be saved in cookies.json file
-# IMPORTANT: You should paste cookie WITH 'sessionId=' prefix
-# like this:
-# Enter cookie: sessionId=abc123...xyz789
+# You'll be prompted for the cookie on first run
+# Enter the complete cookie string:
+# sessionId=abc123...xyz789
 ```
 
-BlackboxAPI will automatically load the cookie from this file when you initialize `AIClient`.
+The cookie will be automatically saved to `cookies.json` for future use.
 
-Remember that cookies may have a limited expiration time. If you encounter authentication errors, try to obtain a new cookie following these instructions.
+## 🔒 Security Notes
 
+- **Never share** your cookie - it provides full account access
+- Store `cookies.json` securely
+- Exclude `cookies.json` from version control
+- Cookies expire periodically - be prepared to refresh
+
+## 🔄 Cookie Refresh
+
+If you encounter authentication errors:
+
+1. Delete existing `cookies.json`
+2. Follow the cookie capture steps again
+3. Restart your application
+
+## 📝 Best Practices
+
+- Implement proper error handling for authentication failures
+- Consider implementing automatic cookie refresh
+- Keep your login session active while using the API
+- Monitor cookie expiration
+
+## 🚨 Troubleshooting
+
+Common issues and solutions:
+
+- **Invalid Cookie Format**: Ensure you include the `sessionId=` prefix
+- **Authentication Errors**: Your cookie might have expired
+- **Missing Cookie File**: Follow the capture steps again
+- **Access Denied**: Verify your account permissions
+
+---
+
+<p align="center">Need help? Just <a href="https://github.com/Keva1z/BlackboxAPI/issues">ask a question</a>!</p>
