@@ -5,7 +5,7 @@ from .exceptions import APIError
 from .utils import load_cookies, parse_and_save_cookies, validate_cookie
 from .database import DatabaseInterface, DictDatabase
 from typing import Optional, Union
-
+import brotli # It is necessary, cuz either response are not decoding
 class AIClient:
     """
     A client for interacting with the Blackbox AI API.
