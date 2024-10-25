@@ -40,6 +40,9 @@ for message in client.get_chat_history():
     print(f"{message.role}: {message.content}")
 ```
 
+- [More examples](tests/test_client.py)
+- [All agent modes](blackboxapi/agent.py)
+
 ## Configuration
 
 BlackboxAPI requires a valid cookie for authentication. You can provide the cookie in two ways:
