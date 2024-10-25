@@ -24,16 +24,13 @@ class DictDatabase(DatabaseInterface):
         self.chats: Dict[str, Chat] = {}
 
     def get_or_create_chat(self, chat_id: str) -> Chat:
-        if chat_id not in self.chats:
-            self.chats[chat_id] = Chat(self, chat_id)
-        return self.chats[chat_id]
+        return self.chats.setdefault(chat_id, Chat(self, chat_id))
 
     def save_chat(self, chat: Chat) -> None:
         self.chats[chat.chat_id] = chat
 
     def delete_chat(self, chat_id: str) -> None:
-        if chat_id in self.chats:
-            del self.chats[chat_id]
+        self.chats.pop(chat_id, None)
 
     def get_chat(self, chat_id: str) -> Optional[Chat]:
         return self.chats.get(chat_id)

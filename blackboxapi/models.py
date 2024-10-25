@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from collections import deque
 import uuid
+from typing import List, Dict, Any
 
 @dataclass
 class Message:
@@ -9,7 +10,7 @@ class Message:
     role: str
     id: str = None
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the message to a dictionary."""
         return {
             "id": self.id,
@@ -24,7 +25,7 @@ class AgentMode:
     id: str
     name: str
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the agent mode to a dictionary."""
         return {
             "mode": self.mode,
@@ -38,7 +39,7 @@ class Model:
     name: str
     id: str
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert the model to a dictionary."""
         return {
             "name": self.name,
@@ -55,10 +56,10 @@ class Chat:
         chat_id: str | None = None
         """
         self.database = database
-        self.messages = deque(maxlen=self.MAX_MESSAGES)
-        self.chat_id = chat_id if chat_id else str(uuid.uuid4())
+        self.messages: deque = deque(maxlen=self.MAX_MESSAGES)
+        self.chat_id: str = chat_id or str(uuid.uuid4())
 
-    def add_message(self, content: str, role: str):
+    def add_message(self, content: str, role: str) -> Message:
         """Add a new message to the chat."""
         message = Message(content=content, role=role, id=self.chat_id)
         self.messages.append(message)
@@ -66,11 +67,11 @@ class Chat:
             self.database.save_chat(self)
         return message
 
-    def get_messages(self):
+    def get_messages(self) -> List[Message]:
         """Get all messages in the chat."""
         return list(self.messages)
 
-    def clear_history(self):
+    def clear_history(self) -> None:
         """Clear the chat history."""
         self.messages.clear()
 

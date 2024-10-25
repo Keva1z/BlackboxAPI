@@ -2,7 +2,7 @@ from blackboxapi.client import AIClient
 from blackboxapi.models import AgentMode
 from blackboxapi.agent import RU_CAN_CODER
 
-client = AIClient()
+client = AIClient(logging=True)
 
 # Use your own agent mode
 # agent_mode = AgentMode(mode=True, id="CANCoderwFvlqld", name="CAN Coder")

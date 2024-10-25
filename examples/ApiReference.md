@@ -18,7 +18,21 @@ Returns a string with the response from the AI.
 
 ### create_async
 
-Not implemented yet.
+```python
+# completions.create_async(message: str, agent: AgentMode | None, model: Model (default: BLACKBOX), max_tokens)
+# Example:
+import asyncio
+
+client = AIClient()
+agent_mode = RU_CAN_CODER
+
+async def main():
+    response: str = client.completions.create_async("How do I code a basic HTML website?", agent_mode)
+    print(response)
+
+asyncio.run(main())
+```
+Returns a string with the async response from the AI.
 
 ### Create image
 
