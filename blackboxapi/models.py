@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-import uuid
 from collections import deque
+import uuid
 
 @dataclass
 class Message:

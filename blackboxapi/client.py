@@ -63,13 +63,13 @@ class AIClient:
             return self.default_chat
         return self.chats.setdefault(agent_mode.id, Chat())
 
-    def generate(self, message: str, agent_mode: AgentMode|None = None, model: Model = BLACKBOX, max_tokens=1024) -> str:
+    def generate(self, message: str, agent: AgentMode|None = None, model: Model = BLACKBOX, max_tokens=1024) -> str:
         """
         Generate a response from the AI model.
 
         Args:
             message (str): The input message.
-            agent_mode (AgentMode, optional): The agent mode to use.
+            agent (AgentMode, optional): The agent mode to use.
             model (Model, optional): The AI model to use. Defaults to BLACKBOX.
             max_tokens (int, optional): Maximum number of tokens in the response. Defaults to 1024.
 
@@ -78,7 +78,7 @@ class AIClient:
         """
         url = f"{self.base_url}/api/chat"
 
-        chat = self._get_chat(agent_mode)
+        chat = self._get_chat(agent)
         chat.add_message(message, "user")
         
         payload = {
@@ -87,7 +87,7 @@ class AIClient:
             "previewToken": None,
             "userId": None,
             "codeModelMode": True,
-            "agentMode": agent_mode.to_dict() if agent_mode else {},
+            "agentMode": agent.to_dict() if agent else {},
             "trendingAgentMode": {},
             "isMicMode": False,
             "maxTokens": max_tokens,
@@ -100,11 +100,11 @@ class AIClient:
             "clickedForceWebSearch": False,
             "visitFromDelta": False,
             "mobileClient": False,
-            "userSelectedModel": None if (model == BLACKBOX or agent_mode) else model.id
+            "userSelectedModel": None if (model == BLACKBOX or agent) else model.id
         }
 
-        if agent_mode:
-            self.headers["referer"] = f"https://www.blackbox.ai/agent/{agent_mode.id}"
+        if agent:
+            self.headers["referer"] = f"https://www.blackbox.ai/agent/{agent.id}"
         else:
             self.headers["referer"] = "https://www.blackbox.ai/chat"
 
@@ -121,14 +121,16 @@ class AIClient:
         except Exception as e:
             raise APIError("Failed to process the server's response")
 
-    def get_chat_history(self, agent_mode: AgentMode|None = None):
+    def get_chat_history(self, agent: AgentMode|None = None):
         """
         Get the chat history for the given agent mode.
+        agent: AgentMode | None = None
         """
-        return self.get_chat(agent_mode).get_messages()
+        return self.get_chat(agent).get_messages()
 
-    def clear_chat_history(self, agent_mode: AgentMode|None = None):
+    def clear_chat_history(self, agent: AgentMode|None = None):
         """
         Clear the chat history for the given agent mode.
+        agent: AgentMode | None = None
         """
-        self.get_chat(agent_mode).clear_history()
+        self.get_chat(agent).clear_history()
