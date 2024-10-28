@@ -13,6 +13,7 @@ A powerful Python library for seamless interaction with the Blackbox AI API. Lev
 - 💾 Built-in chat history management
 - 🍪 Automatic cookie handling and validation
 - 🔄 Async support for high-performance applications
+- 🌐 Can see pages that you give to him
 
 ## 📦 Installation
 
