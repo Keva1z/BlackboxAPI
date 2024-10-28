@@ -141,24 +141,24 @@ class AIClient:
         chat.add_message(message, "user")
         
         payload = {
-            "messages": [m.to_dict() for m in chat.get_messages()],
-            "id": chat.chat_id,
-            "previewToken": None,
-            "userId": None,
-            "codeModelMode": True,
             "agentMode": agent.to_dict() if agent else {},
-            "trendingAgentMode": {},
-            "isMicMode": False,
-            "maxTokens": max_tokens,
-            "playgroundTopP": None,
-            "playgroundTemperature": None,
-            "isChromeExt": False,
-            "githubToken": None,
             "clickedAnswer2": False,
             "clickedAnswer3": False,
             "clickedForceWebSearch": False,
-            "visitFromDelta": False,
+            "codeModelMode": True,
+            "githubToken": None,
+            "id": chat.chat_id,
+            "isChromeExt": False,
+            "isMicMode": False,
+            "maxTokens": max_tokens,
+            "messages": [m.to_dict() for m in chat.get_messages()],
             "mobileClient": False,
+            "playgroundTemperature": 0.5,
+            "playgroundTopP": 0.9,
+            "previewToken": None,
+            "trendingAgentMode": {},
+            "userId": None,
+            "visitFromDelta": False,
             "userSelectedModel": None if (model == BLACKBOX or agent) else model.id
         }
         
