@@ -20,7 +20,7 @@ completions.create(
 ) -> str
 ```
 
-```
+```python
 # Example
 
 client = AIClient()
@@ -48,7 +48,7 @@ completions.create_async(
 ) -> Coroutine[str]
 ```
 
-```
+```python
 # Example
 
 import asyncio
@@ -82,7 +82,7 @@ asyncio.run(main())
 chat_history.get_chat_history(agent: AgentMode | None = None) -> list[Message]
 ```
 
-```
+```python
 # Example
 
 client = AIClient()
@@ -102,7 +102,7 @@ for message in chat_history:
 chat_history.clear_chat_history(agent: AgentMode | None = None) -> None
 ```
 
-```
+```python
 # Example
 
 client = AIClient()
@@ -118,7 +118,7 @@ client.chat_history.clear_chat_history()
 chat_history.delete_chat(agent: AgentMode | None = None) -> None
 ```
 
-```
+```python
 # Example
 
 client = AIClient()

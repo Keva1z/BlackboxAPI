@@ -159,6 +159,7 @@ class AIClient:
             "trendingAgentMode": {},
             "userId": None,
             "visitFromDelta": False,
+            "validated" : "69783381-2ce4-4dbd-ac78-35e9063feabc",
             "userSelectedModel": None if (model == BLACKBOX or agent) else model.id
         }
         
