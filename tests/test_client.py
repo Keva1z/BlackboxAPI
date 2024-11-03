@@ -1,28 +1,48 @@
-from blackboxapi.client import AIClient
-from blackboxapi.models import AgentMode
-from blackboxapi.agent import RU_CAN_CODER
+"""Tests for the AIClient class and its functionality."""
 
-client = AIClient(logging=True)
+import pytest
+from unittest.mock import Mock, patch
+from blackboxapi import (
+    AIClient, 
+    RU_CAN_CODER,
+    CLAUDE,
+    APIError,
+    DatabaseError
+)
 
-# Use your own agent mode
-# agent_mode = AgentMode(mode=True, id="CANCoderwFvlqld", name="CAN Coder")
+@pytest.fixture
+def client():
+    """Create a test client with mock cookies."""
+    with patch('blackboxapi.client.load_cookies') as mock_load:
+        mock_load.return_value = "test_cookie"
+        return AIClient(cookie_file="test_cookies.json")
 
-agent_mode = RU_CAN_CODER
+def test_client_initialization(client):
+    """Test client initialization with default parameters."""
+    assert client.base_url == "https://www.blackbox.ai"
+    assert client.use_chat_history is True
+    assert client.logging is False
 
-# Generate with agent:
-response = client.completions.create("How do I code the basic HTML website?", agent_mode)
-print("Assistant:", response)
+@pytest.mark.asyncio
+async def test_async_completion(client):
+    """Test asynchronous completion generation."""
+    with patch('blackboxapi.client.AIClient._make_async_request') as mock_request:
+        mock_request.return_value = {"response": "Test response"}
+        response = await client.completions.create_async(
+            "Test message",
+            agent=RU_CAN_CODER,
+            model=CLAUDE
+        )
+        assert response == "Test response"
 
-# Generate without agent:
-response = client.completions.create("Can you show me an example?", agent_mode)
-print("Assistant:", response)
-
-# Show chat history for agent:
-print("\nChat History (with agent):")
-for message in client.get_chat_history(agent_mode):
-    print(f"{message.role}: {message.content}")
-
-# Show chat history without agent:
-print("\nChat History (without agent):")
-for message in client.get_chat_history(None):
-    print(f"{message.role}: {message.content}")
+def test_chat_history_management(client):
+    """Test chat history operations."""
+    client.completions.create("Test message 1")
+    client.completions.create("Test message 2")
+    
+    history = client.get_chat_history()
+    assert len(history) == 2
+    assert history[0].content == "Test message 1"
+    
+    client.clear_chat_history()
+    assert len(client.get_chat_history()) == 0
