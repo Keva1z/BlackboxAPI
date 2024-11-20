@@ -19,6 +19,7 @@ Comprehensive API reference for the BlackboxAPI library.
 - [Database Integration](#database-integration)
 - [Error Handling](#error-handling)
 - [Utilities](#utilities)
+- [Image Processing](#image-processing)
 
 ## 🔧 Client Configuration
 
@@ -284,6 +285,51 @@ def process_messages(
     # Your code with full type support
     pass
 ```
+
+## 🖼️ Image Processing
+
+### Working with Images
+
+```python
+from blackboxapi import AIClient, RU_MENTAL_ADVISOR
+
+client = AIClient()
+
+# From file
+with open("image.jpg", "rb") as f:
+    response = await client.completions.create_async(
+        "Analyze this image",
+        image=f.read(),
+        agent=RU_MENTAL_ADVISOR
+    )
+
+# From URL
+import requests
+image_url = "https://example.com/image.jpg"
+response = requests.get(image_url)
+response = await client.completions.create_async(
+    "What's in this image?",
+    image=response.content
+)
+
+# From PIL Image
+from PIL import Image
+image = Image.open("image.jpg")
+response = await client.completions.create_async(
+    "Describe this image",
+    image=image
+)
+```
+
+### Image Support Details
+
+| Format | Extension | Support |
+|--------|-----------|---------|
+| JPEG | .jpg, .jpeg | ✅ |
+| PNG | .png | ✅ |
+| GIF | .gif | ✅ |
+| WebP | .webp | ✅ |
+| SVG | .svg | ✅ |
 
 ---
 

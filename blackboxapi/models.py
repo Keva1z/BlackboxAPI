@@ -21,6 +21,7 @@ class Message:
     role: str
     id: str = None
     timestamp: str = None
+    image: Optional[str] = None
 
     def __post_init__(self):
         """Initialize optional fields after dataclass creation."""
@@ -35,11 +36,22 @@ class Message:
         Returns:
             Dict[str, Any]: Dictionary containing message data
         """
+        if self.image:
+            return {
+                "id": self.id,
+                "content": self.content,
+                "role": self.role,
+                "data": {
+                    "fileText": "",
+                    "imageBase64": self.image,
+                    "title": None,
+                }
+            }
+        
         return {
             "id": self.id,
             "content": self.content,
             "role": self.role,
-            "timestamp": self.timestamp
         }
 
 @dataclass
@@ -133,7 +145,7 @@ class Chat:
         }
         logger.debug(f"Created new chat session with ID: {self.chat_id}")
 
-    def add_message(self, content: str, role: str) -> Message:
+    def add_message(self, content: str, role: str, image: Optional[str] = None) -> Message:
         """Add a new message to the chat history.
         
         Args:
@@ -151,7 +163,7 @@ class Chat:
         if role not in ["user", "assistant"]:
             raise ValueError("Invalid message role")
 
-        message = Message(content=content, role=role, id=str(uuid.uuid4()))
+        message = Message(content=content, role=role, id=str(uuid.uuid4()), image=image)
         self.messages.append(message)
         self.metadata.update({
             "message_count": len(self.messages),
@@ -189,7 +201,7 @@ GPT4 = Model(
 
 CLAUDE = Model(
     name="Claude",
-    id="claude-3.5-sonnet",
+    id="claude-sonnet-3.5",
     max_tokens=8192,
     supports_streaming=False
 )

@@ -2,12 +2,12 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)
+![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 [![Documentation](https://img.shields.io/badge/docs-examples-brightgreen.svg)](examples/)
 
-A powerful Python library for interacting with the Blackbox AI API, supporting multiple AI models and specialized agents.
+A powerful Python library for interacting with the Blackbox AI API, supporting multiple AI models, specialized agents, and image analysis.
 
 [Installation](#installation) •
 [Quick Start](#quick-start) •
@@ -26,23 +26,31 @@ pip install blackboxapi
 ## 🚀 Quick Start
 
 ```python
-from blackboxapi import AIClient, RU_CAN_CODER, CLAUDE
+from blackboxapi import AIClient, RU_CAN_CODER, RU_MENTAL_ADVISOR
+import asyncio
 
-client = AIClient(logging=True) #Initialize the client
+async def main():
+    client = AIClient(logging=True)
+    
+    # Text analysis
+    response = await client.completions.create_async(
+        "How do I create a REST API with FastAPI?",
+        agent=RU_CAN_CODER
+    )
+    print("Assistant:", response)
+    
+    # Image analysis
+    with open("image.jpg", "rb") as f:
+        image_data = f.read()
+    
+    response = await client.completions.create_async(
+        "Analyze this image",
+        image=image_data,
+        agent=RU_MENTAL_ADVISOR
+    )
+    print("Assistant:", response)
 
-# Generate with Russian-speaking coding agent
-response = client.completions.create(
-    "How do I create a REST API with FastAPI?",
-    agent=RU_CAN_CODER,
-    model=CLAUDE # This is not used by the agent, but can be specified
-)
-
-print("Assistant:", response)
-
-# Access chat history
-print("\nChat History:") 
-for message in client.get_chat_history():
-    print(f"{message.role}: {message.content}")
+asyncio.run(main())
 ```
 
 ## ✨ Features
@@ -52,6 +60,12 @@ for message in client.get_chat_history():
   - Claude
   - Gemini
   - Blackbox AI
+
+- 🖼️ Image Analysis Support:
+  - Multiple image formats (JPEG, PNG, GIF, WebP)
+  - File, URL, and bytes input
+  - Intelligent image processing
+  - Base64 optimization
 
 - 🎭 Specialized agent modes:
   - Prompt Generator
