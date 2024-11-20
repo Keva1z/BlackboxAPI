@@ -20,7 +20,7 @@ A powerful Python library for interacting with the Blackbox AI API, supporting m
 ## 🚀 Installation
 
 ```bash
-pip install blackboxapi
+pip install git+https://github.com/Keva1z/BlackboxAPI.git
 ```
 
 ## 🚀 Quick Start
