@@ -17,7 +17,7 @@ Basic usage:
 For more information, visit: https://github.com/Keva1z/blackboxapi
 """
 
-__version__ = "0.3.0"
+__version__ = "0.5.0"
 __author__ = "Keva1z"
 __email__ = "Keva1z@yandex.ru"
 __license__ = "MIT"
