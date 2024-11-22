@@ -16,6 +16,7 @@ import json
 import os
 from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
+from abc import ABC, abstractmethod
 
 from .models import Message, AgentMode, Chat, Model, BLACKBOX
 from .exceptions import APIError
@@ -43,83 +44,12 @@ class LogType:
     RESPONSE = 'RESPONSE'
     DEBUG = 'DEBUG'
 
-class Completions:
-    """Handles completion requests to the API.
+class BaseAIClient(ABC):
+    """Base abstract class for AI clients.
     
-    This class provides methods for generating completions both synchronously
-    and asynchronously using different models and agent modes.
+    Defines common functionality and interface for both sync and async clients.
     """
     
-    def __init__(self, client: 'AIClient'):
-        """Initialize the completions handler.
-        
-        Args:
-            client (AIClient): The parent AIClient instance
-        """
-        self.client = client
-
-    def create(
-        self, 
-        message: str, 
-        agent: Optional[AgentMode] = None, 
-        model: Model = BLACKBOX, 
-        max_tokens: int = 1024,
-        image: Optional[str] = None
-    ) -> str:
-        """Generate a completion synchronously.
-        
-        Args:
-            message (str): The input message to generate from
-            agent (Optional[AgentMode]): The agent mode to use
-            model (Model): The AI model to use
-            max_tokens (int): Maximum tokens in the response
-            
-        Returns:
-            str: The generated completion text
-            
-        Raises:
-            APIError: If the API request fails
-        """
-        return self.client._generate(message, agent, model, max_tokens, image)
-
-    async def create_async(
-        self, 
-        message: str, 
-        agent: Optional[AgentMode] = None, 
-        model: Model = BLACKBOX, 
-        max_tokens: int = 1024,
-        image: Optional[str] = None
-    ) -> str:
-        """Generate a completion asynchronously.
-        
-        Args:
-            message (str): The input message to generate from
-            agent (Optional[AgentMode]): The agent mode to use
-            model (Model): The AI model to use
-            max_tokens (int): Maximum tokens in the response
-            
-        Returns:
-            str: The generated completion text
-            
-        Raises:
-            APIError: If the API request fails
-        """
-        return await self.client._generate_async(message, agent, model, max_tokens, image)
-
-class AIClient:
-    """Main client for interacting with the Blackbox AI API.
-    
-    This class handles authentication, manages chat history, and provides
-    methods for generating completions using different models and agents.
-    
-    Attributes:
-        base_url (str): The base URL for API requests
-        headers (Dict): HTTP headers for requests
-        database (DatabaseInterface): Storage for chat history
-        completions (Completions): Handler for completion requests
-        enable_logging (bool): Whether to enable detailed logging
-    """
-
     _last_validated_value = None
     _validated_cache_file = "validated_cache.json"
     _validated_cache_ttl = timedelta(hours=4)
@@ -132,30 +62,15 @@ class AIClient:
         database: Optional[DatabaseInterface] = None,
         enable_logging: bool = False
     ):
-        """Initialize the AI client.
-        
-        Args:
-            base_url (str): Base URL for API requests
-            cookie_file (Optional[str]): Path to cookie file
-            use_chat_history (bool): Whether to maintain chat history
-            database (Optional[DatabaseInterface]): Custom database implementation
-            logging (bool): Enable detailed logging
-        """
+        """Initialize the base client."""
         self.base_url = base_url
         self.use_chat_history = use_chat_history
         self.database = database or DictDatabase()
         self.enable_logging = enable_logging
         
-        # Initialize headers with default values
         self.headers = self._initialize_headers()
-        
-        # Set up authentication
         self._setup_authentication(cookie_file)
         
-        # Initialize completions handler
-        self.completions = Completions(self)
-        
-        # Set up logging if enabled
         if self.enable_logging:
             self._setup_logging()
 
@@ -424,95 +339,70 @@ class AIClient:
         
         return payload, chat
 
-    def _generate(
+    @abstractmethod
+    def _generate(self, message: str, agent: Optional[AgentMode], model: Model, 
+                 max_tokens: int, image: Optional[str]) -> str:
+        """Abstract method for synchronous generation."""
+        pass
+
+    @abstractmethod
+    async def _generate_async(self, message: str, agent: Optional[AgentMode], 
+                            model: Model, max_tokens: int, image: Optional[str]) -> str:
+        """Abstract method for asynchronous generation."""
+        pass
+
+class AsyncCompletions:
+    """Async completions handler."""
+    
+    def __init__(self, client: 'AsyncAIClient'):
+        self.client = client
+
+    async def create(
         self, 
         message: str, 
-        agent: Optional[AgentMode] = None,
-        model: Model = BLACKBOX,
+        agent: Optional[AgentMode] = None, 
+        model: Model = BLACKBOX, 
         max_tokens: int = 1024,
         image: Optional[str] = None
     ) -> str:
-        """Generate a completion synchronously.
-        
-        Args:
-            message (str): Input message
-            agent (Optional[AgentMode]): Agent mode
-            model (Model): AI model
-            max_tokens (int): Maximum tokens
-            
-        Returns:
-            str: Generated completion
-            
-        Raises:
-            APIError: If the API request fails
-        """
-        self._log(
-            f"Generating response for message: {message[:50]}...", 
-            LogType.INFO
-        )
-        
-        url = f"{self.base_url}/api/chat"
-        payload, chat = asyncio.run(self._prepare_payload(message, agent, model, max_tokens, image))
+        """Generate completion asynchronously."""
+        return await self.client._generate_async(message, agent, model, max_tokens, image)
 
-        self._log(f"Sending request to {url}", LogType.REQUEST)
-        response = requests.post(url, headers=self.headers, json=payload)
-        
-        if response.status_code != 200:
-            self._log(
-                f"API returned status code {response.status_code}", 
-                LogType.ERROR
-            )
-            raise APIError(
-                f"API returned status code {response.status_code}: {response.content}"
-            )
+class SyncCompletions:
+    """Sync completions handler."""
+    
+    def __init__(self, client: 'AIClient'):
+        self.client = client
 
-        try:
-            response_text = response.content.decode('utf-8')
-            response_text = ''.join(
-                char for char in response_text 
-                if char.isprintable() or char == '\n'
-            )
-            
-            processed_response = self._process_response(response_text)
-            
-            chat.add_message(processed_response, "assistant")
-            self._log("Response generated and added to chat history", LogType.RESPONSE)
-            return processed_response
-            
-        except Exception as e:
-            self._log(f"Failed to process the server response: {str(e)}", LogType.ERROR)
-            raise APIError("Failed to process the server response")
-
-    async def _generate_async(
+    def create(
         self, 
         message: str, 
-        agent: Optional[AgentMode] = None,
-        model: Model = BLACKBOX,
+        agent: Optional[AgentMode] = None, 
+        model: Model = BLACKBOX, 
         max_tokens: int = 1024,
         image: Optional[str] = None
     ) -> str:
-        """Generate a completion asynchronously.
-        
-        Args:
-            message (str): Input message
-            agent (Optional[AgentMode]): Agent mode
-            model (Model): AI model
-            max_tokens (int): Maximum tokens
-            image (Optional[str]): Base64 image data
-            
-        Returns:
-            str: Generated completion
-            
-        Raises:
-            APIError: If the API request fails
-        """
-        self._log(
-            f"Asynchronously generating response for message: {message[:50]}...",
-            LogType.INFO
-        )
-        
+        """Generate completion synchronously."""
+        return self.client._generate(message, agent, model, max_tokens, image)
+
+class AsyncAIClient(BaseAIClient):
+    """Asynchronous AI client implementation."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.completions = AsyncCompletions(self)
+
+    def _generate(self, message: str, agent: Optional[AgentMode], model: Model, 
+                 max_tokens: int, image: Optional[str]) -> str:
+        """Sync generation not supported in async client."""
+        raise NotImplementedError("Use create() for async generation")
+
+    async def _generate_async(self, message: str, agent: Optional[AgentMode], 
+                            model: Model, max_tokens: int, image: Optional[str]) -> str:
+        """Async generation implementation."""
         url = f"{self.base_url}/api/chat"
-        if image is not None: image = image_to_base64(image)
+        if image is not None: 
+            image = image_to_base64(image)
         payload, chat = await self._prepare_payload(message, agent, model, max_tokens, image)
 
         self._log(f"Sending async request to {url}", LogType.REQUEST)
@@ -520,73 +410,78 @@ class AIClient:
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.post(url, json=payload) as response:
                 if response.status != 200:
-                    self._log(
-                        f"API returned status code {response.status}",
-                        LogType.ERROR
-                    )
-                    raise APIError(
-                        f"API returned status code {response.status}: {await response.text()}"
-                    )
+                    self._log(f"API returned status code {response.status}", LogType.ERROR)
+                    raise APIError(f"API returned status code {response.status}: {await response.text()}")
 
                 try:
                     response_text = await response.text()
-                    self._log("Processing API response", LogType.DEBUG)
-                    
-                    # Удаляем специальные маркеры
-                    response_text = re.sub(r'\$~~~\$.*?\$~~~\$', '', response_text, flags=re.DOTALL)
-                    response_text = re.sub(r'Generated by BLACKBOX\.AI.*?\n\n?', '', response_text)
-                    
-                    if not response_text.strip():
-                        raise ValueError("Empty response from API")
-                    
-                    chat.add_message(response_text.strip(), "assistant")
+                    processed_response = self._process_response(response_text)
+                    await chat.add_message_async(processed_response, "assistant")
                     self._log("Response generated and added to chat history", LogType.RESPONSE)
-                    return response_text.strip()
+                    return processed_response
                     
                 except Exception as e:
                     self._log(f"Failed to process the server response: {str(e)}", LogType.ERROR)
                     raise APIError("Failed to process the server response")
 
-    def get_chat_history(
-        self, 
-        agent: Optional[AgentMode] = None
-    ) -> List[Message]:
-        """Get chat history for the specified agent mode.
-        
-        Args:
-            agent (Optional[AgentMode]): Agent mode to get history for
-            
-        Returns:
-            List[Message]: List of chat messages
-        """
-        self._log(
-            f"Getting chat history for agent: {agent.id if agent else 'default'}",
-            LogType.INFO
-        )
-        chat = self._get_chat(agent)
-        return chat.get_messages()
+    async def get_chat_history(self, agent: Optional[AgentMode] = None) -> List[Message]:
+        """Get chat history asynchronously."""
+        chat = await self._get_chat_async(agent)
+        return await chat.get_messages_async()
 
-    def clear_chat_history(self, agent: Optional[AgentMode] = None) -> None:
-        """Clear chat history for the specified agent mode.
-        
-        Args:
-            agent (Optional[AgentMode]): Agent mode to clear history for
-        """
-        self._log(
-            f"Clearing chat history for agent: {agent.id if agent else 'default'}",
-            LogType.INFO
-        )
-        chat = self._get_chat(agent)
-        chat.clear_history()
-        self.database.save_chat(chat)
+    async def clear_chat_history(self, agent: Optional[AgentMode] = None) -> None:
+        """Clear chat history asynchronously."""
+        chat = await self._get_chat_async(agent)
+        await chat.clear_history_async()
+        await self.database.save_chat_async(chat)
 
-    def delete_chat(self, agent: Optional[AgentMode] = None) -> None:
-        """Delete chat session for the specified agent mode.
-        
-        Args:
-            agent (Optional[AgentMode]): Agent mode to delete chat for
-        """
+    async def delete_chat(self, agent: Optional[AgentMode] = None) -> None:
+        """Delete chat asynchronously."""
         chat_id = agent.id if agent else "default"
-        self._log(f"Deleting chat for agent: {chat_id}", LogType.INFO)
-        self.database.delete_chat(chat_id)
+        await self.database.delete_chat_async(chat_id)
+
+    async def _get_chat_async(self, agent_mode: Optional[AgentMode] = None) -> Chat:
+        """Get or create chat asynchronously."""
+        if not self.use_chat_history:
+            return Chat(self.database)
+            
+        chat_id = agent_mode.id if agent_mode else "default"
+        self._log(f"Getting chat for agent mode: {chat_id}", LogType.DEBUG)
+        return await self.database.get_or_create_chat_async(chat_id)
+
+class AIClient(BaseAIClient):
+    """Synchronous AI client implementation."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.completions = SyncCompletions(self)
+
+    async def _generate_async(self, message: str, agent: Optional[AgentMode], 
+                            model: Model, max_tokens: int, image: Optional[str]) -> str:
+        """Async generation not supported in sync client."""
+        raise NotImplementedError("Use create() for sync generation")
+
+    def _generate(self, message: str, agent: Optional[AgentMode], model: Model, 
+                 max_tokens: int, image: Optional[str]) -> str:
+        """Sync generation implementation."""
+        url = f"{self.base_url}/api/chat"
+        payload, chat = asyncio.run(self._prepare_payload(message, agent, model, max_tokens, image))
+
+        self._log(f"Sending request to {url}", LogType.REQUEST)
+        response = requests.post(url, headers=self.headers, json=payload)
+        
+        if response.status_code != 200:
+            self._log(f"API returned status code {response.status_code}", LogType.ERROR)
+            raise APIError(f"API returned status code {response.status_code}: {response.content}")
+
+        try:
+            response_text = response.content.decode('utf-8')
+            processed_response = self._process_response(response_text)
+            chat.add_message(processed_response, "assistant")
+            self._log("Response generated and added to chat history", LogType.RESPONSE)
+            return processed_response
+            
+        except Exception as e:
+            self._log(f"Failed to process the server response: {str(e)}", LogType.ERROR)
+            raise APIError("Failed to process the server response")
 

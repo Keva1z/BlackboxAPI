@@ -191,6 +191,23 @@ class Chat:
         self.metadata["last_updated"] = datetime.utcnow().isoformat()
         logger.info(f"Cleared history for chat {self.chat_id}")
 
+    async def get_messages_async(self) -> List[Message]:
+        """Get chat messages asynchronously."""
+        return self.messages
+
+    async def add_message_async(self, content: str, role: str) -> None:
+        """Add a message to the chat history asynchronously."""
+        message = Message(content=content, role=role)
+        self.messages.append(message)
+        if self.database:
+            await self.database.save_chat_async(self)
+
+    async def clear_history_async(self) -> None:
+        """Clear chat history asynchronously."""
+        self.messages.clear()
+        if self.database:
+            await self.database.save_chat_async(self)
+
 # Define available models with their capabilities
 GPT4 = Model(
     name="GPT-4",
