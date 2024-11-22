@@ -52,6 +52,7 @@ client = AIClient(
 ### Synchronous Generation
 
 ```python
+# Synchronous generation
 from blackboxapi import AIClient, RU_CAN_CODER, CLAUDE
 
 client = AIClient()
@@ -66,11 +67,12 @@ response = client.completions.create(
 ### Asynchronous Generation
 
 ```python
+# Asynchronous generation
 import asyncio
-from blackboxapi import AIClient
+from blackboxapi import AsyncAIClient, CLAUDE
 
-client = AIClient()
-response = await client.completions.create_async(
+client = AsyncAIClient()
+response = await client.completions.create(
     message="Explain async/await in Python",
     agent=None,                 # Optional agent mode
     model=CLAUDE,               # Optional model selection
@@ -171,6 +173,7 @@ print(RU_CAN_CODER.description) # "Russian-speaking coding assistant..."
 from blackboxapi import DatabaseInterface, Chat
 from typing import Optional, List
 
+# Important: All methods must be implemented! (Check them in the source code of DatabaseInterface, it's very simple)
 class CustomDatabase(DatabaseInterface):
     def get_or_create_chat(self, chat_id: str) -> Chat:
         # Implementation
@@ -209,9 +212,6 @@ metadata = database.get_chat_metadata(chat_id)
 print(metadata["created_at"])
 print(metadata["message_count"])
 print(metadata["last_updated"])
-
-# Clear database
-database.clear_all()
 ```
 
 ## ⚠️ Error Handling
@@ -259,7 +259,7 @@ expiration = get_cookie_expiration(cookie_dict)
 ### Logging
 
 ```python
-client = AIClient(logging=True)
+client = AIClient(enable_logging=True)
 
 # Log levels are automatically colored:
 # - INFO: Cyan

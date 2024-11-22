@@ -80,6 +80,26 @@ class DatabaseInterface(ABC):
         """
         pass
 
+    @abstractmethod
+    async def get_or_create_chat_async(self, chat_id: str) -> Chat:
+        """Async version of get_or_create_chat."""
+        pass
+
+    @abstractmethod
+    async def save_chat_async(self, chat: Chat) -> None:
+        """Async version of save_chat."""
+        pass
+
+    @abstractmethod
+    async def delete_chat_async(self, chat_id: str) -> None:
+        """Async version of delete_chat."""
+        pass
+
+    @abstractmethod
+    async def get_chat_async(self, chat_id: str) -> Optional[Chat]:
+        """Async version of get_chat."""
+        pass
+
 class DictDatabase(DatabaseInterface):
     """In-memory implementation of DatabaseInterface using a dictionary.
     
@@ -179,3 +199,58 @@ class DictDatabase(DatabaseInterface):
         self.chats.clear()
         self.metadata.clear()
         logger.warning("Cleared all chats and metadata from storage")
+
+    async def get_or_create_chat_async(self, chat_id: str) -> Chat:
+        """Async implementation of get_or_create_chat."""
+        try:
+            if chat_id not in self.chats:
+                logger.debug(f"Creating new chat with ID: {chat_id}")
+                self.chats[chat_id] = Chat(self, chat_id)
+                self.metadata[chat_id] = {
+                    'created_at': datetime.utcnow().isoformat(),
+                    'message_count': 0,
+                    'last_updated': datetime.utcnow().isoformat()
+                }
+            return self.chats[chat_id]
+        except Exception as e:
+            logger.error(f"Error in get_or_create_chat_async: {str(e)}")
+            raise DatabaseError(f"Failed to get or create chat: {str(e)}")
+
+    async def save_chat_async(self, chat: Chat) -> None:
+        """Async implementation of save_chat."""
+        try:
+            if not isinstance(chat, Chat):
+                raise ValueError("Invalid chat object")
+                
+            self.chats[chat.chat_id] = chat
+            self.metadata[chat.chat_id].update({
+                'message_count': len(await chat.get_messages_async()),
+                'last_updated': datetime.utcnow().isoformat()
+            })
+            logger.debug(f"Saved chat {chat.chat_id} with {len(await chat.get_messages_async())} messages")
+        except Exception as e:
+            logger.error(f"Error in save_chat_async: {str(e)}")
+            raise DatabaseError(f"Failed to save chat: {str(e)}")
+
+    async def delete_chat_async(self, chat_id: str) -> None:
+        """Async implementation of delete_chat."""
+        try:
+            self.chats.pop(chat_id, None)
+            self.metadata.pop(chat_id, None)
+            logger.info(f"Deleted chat {chat_id}")
+        except Exception as e:
+            logger.error(f"Error in delete_chat_async: {str(e)}")
+            raise DatabaseError(f"Failed to delete chat: {str(e)}")
+
+    async def get_chat_async(self, chat_id: str) -> Optional[Chat]:
+        """Async implementation of get_chat."""
+        try:
+            chat = self.chats.get(chat_id)
+            if chat:
+                logger.debug(f"Retrieved chat {chat_id}")
+            else:
+                logger.debug(f"Chat {chat_id} not found")
+            return chat
+        except Exception as e:
+            logger.error(f"Error in get_chat_async: {str(e)}")
+            raise DatabaseError(f"Failed to get chat: {str(e)}")

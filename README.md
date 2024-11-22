@@ -26,14 +26,15 @@ pip install git+https://github.com/Keva1z/BlackboxAPI.git
 ## 🚀 Quick Start
 
 ```python
-from blackboxapi import AIClient, RU_CAN_CODER, RU_MENTAL_ADVISOR
+# Asynchronous client
+from blackboxapi import AsyncAIClient, RU_CAN_CODER, RU_MENTAL_ADVISOR
 import asyncio
 
 async def main():
-    client = AIClient(logging=True)
+    client = AsyncAIClient(enable_logging=True)
     
     # Text analysis
-    response = await client.completions.create_async(
+    response = await client.completions.create(
         "How do I create a REST API with FastAPI?",
         agent=RU_CAN_CODER
     )
@@ -43,7 +44,7 @@ async def main():
     with open("image.jpg", "rb") as f:
         image_data = f.read()
     
-    response = await client.completions.create_async(
+    response = await client.completions.create(
         "Analyze this image",
         image=image_data,
         agent=RU_MENTAL_ADVISOR
@@ -132,10 +133,10 @@ response = client.completions.create(
 
 ```python
 import asyncio
-from blackboxapi import AIClient, RU_ALGORITHM_EXPLAINER
+from blackboxapi import AsyncAIClient, RU_ALGORITHM_EXPLAINER
 async def main():
-    client = AIClient()
-    response = await client.completions.create_async(
+    client = AsyncAIClient()
+    response = await client.completions.create(
         "Explain quicksort algorithm",
         agent=RU_ALGORITHM_EXPLAINER
     )
@@ -155,7 +156,7 @@ client = AIClient(
     cookie_file="cookies.json",
     use_chat_history=True,
     database=None, # Custom database implementation
-    logging=True # Enable detailed logging
+    enable_logging=True # Enable detailed logging
 )
 ```
 
