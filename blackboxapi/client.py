@@ -178,7 +178,7 @@ class BaseAIClient(ABC):
         )
 
     def _get_chat(self, agent_mode: Optional[AgentMode] = None) -> Chat:
-        """Get or create a chat session for the specified agent mode.
+        """Get or create a chat session synchronously.
         
         Args:
             agent_mode (Optional[AgentMode]): The agent mode to get chat for
@@ -192,6 +192,22 @@ class BaseAIClient(ABC):
         chat_id = agent_mode.id if agent_mode else "default"
         self._log(f"Getting chat for agent mode: {chat_id}", LogType.DEBUG)
         return self.database.get_or_create_chat(chat_id)
+
+    async def _get_chat_async(self, agent_mode: Optional[AgentMode] = None) -> Chat:
+        """Get or create a chat session asynchronously.
+        
+        Args:
+            agent_mode (Optional[AgentMode]): The agent mode to get chat for
+            
+        Returns:
+            Chat: The chat session
+        """
+        if not self.use_chat_history:
+            return Chat(self.database)
+            
+        chat_id = agent_mode.id if agent_mode else "default"
+        self._log(f"Getting chat for agent mode: {chat_id}", LogType.DEBUG)
+        return await self.database.get_or_create_chat_async(chat_id)
 
     def _process_response(self, response_text: str) -> str:
         """Process and clean the API response text.
@@ -275,7 +291,7 @@ class BaseAIClient(ABC):
 
         return self._last_validated_value
 
-    async def _prepare_payload(
+    async def _prepare_payload_async(
         self, 
         message: str, 
         agent: Optional[AgentMode],
@@ -283,23 +299,64 @@ class BaseAIClient(ABC):
         max_tokens: int,
         image: Optional[str] = None
     ) -> tuple[dict, Chat]:
-        """Prepare the request payload and chat session.
+        """Prepare the request payload and chat session asynchronously."""
+        chat = await self._get_chat_async(agent)
+        await chat.add_message_async(message + "\n\nОтвечай только на том языке, на котором я задал вопрос. Т.е задал на русском - ответил на русском.", "user", image)
         
-        Args:
-            message (str): Input message
-            agent (Optional[AgentMode]): Agent mode
-            model (Model): AI model
-            max_tokens (int): Maximum tokens
-            image (Optional[str]): Base64 image data
-            
-        Returns:
-            tuple[dict, Chat]: Prepared payload and chat session
-        """
+        validated_value = await self._fetch_validated()
+        
+        payload = {
+            "messages": [m.to_dict() for m in await chat.get_messages_async()],
+            "id": chat.chat_id,
+            "previewToken": None,
+            "userId": None,
+            "codeModelMode": True,
+            "agentMode": agent.to_dict() if agent else {},
+            "trendingAgentMode": {},
+            "isMicMode": False,
+            "userSystemPrompt": None,
+            "maxTokens": max_tokens,
+            "playgroundTopP": 0.9,
+            "playgroundTemperature": 0.5,
+            "isChromeExt": False,
+            "githubToken": None,
+            "clickedAnswer2": False,
+            "clickedAnswer3": False,
+            "clickedForceWebSearch": False,
+            "visitFromDelta": False,
+            "mobileClient": False,
+            "userSelectedModel": None,
+            "validated": validated_value
+        }
+
+        # Если нет изображения и не используется агент или BLACKBOX модель,
+        # устанавливаем выбранную модель
+        if image is None and not agent and model != BLACKBOX:
+            payload["userSelectedModel"] = model.id
+        
+        # Update referer header based on agent mode
+        self.headers["referer"] = (
+            f"https://www.blackbox.ai/agent/{agent.id}"
+            if agent else
+            "https://www.blackbox.ai/chat"
+        )
+        
+        return payload, chat
+
+    def _prepare_payload(
+        self, 
+        message: str, 
+        agent: Optional[AgentMode],
+        model: Model, 
+        max_tokens: int,
+        image: Optional[str] = None
+    ) -> tuple[dict, Chat]:
+        """Prepare the request payload and chat session synchronously."""
         chat = self._get_chat(agent)
         chat.add_message(message + "\n\nОтвечай только на том языке, на котором я задал вопрос. Т.е задал на русском - ответил на русском.", "user", image)
         
-        # Получаем актуальное значение validated
-        validated_value = await self._fetch_validated()
+        # For sync client, we still need to run fetch_validated in an event loop
+        validated_value = asyncio.run(self._fetch_validated())
         
         payload = {
             "messages": [m.to_dict() for m in chat.get_messages()],
@@ -403,7 +460,7 @@ class AsyncAIClient(BaseAIClient):
         url = f"{self.base_url}/api/chat"
         if image is not None: 
             image = image_to_base64(image)
-        payload, chat = await self._prepare_payload(message, agent, model, max_tokens, image)
+        payload, chat = await self._prepare_payload_async(message, agent, model, max_tokens, image)
 
         self._log(f"Sending async request to {url}", LogType.REQUEST)
         
@@ -440,15 +497,6 @@ class AsyncAIClient(BaseAIClient):
         chat_id = agent.id if agent else "default"
         await self.database.delete_chat_async(chat_id)
 
-    async def _get_chat_async(self, agent_mode: Optional[AgentMode] = None) -> Chat:
-        """Get or create chat asynchronously."""
-        if not self.use_chat_history:
-            return Chat(self.database)
-            
-        chat_id = agent_mode.id if agent_mode else "default"
-        self._log(f"Getting chat for agent mode: {chat_id}", LogType.DEBUG)
-        return await self.database.get_or_create_chat_async(chat_id)
-
 class AIClient(BaseAIClient):
     """Synchronous AI client implementation."""
     
@@ -465,7 +513,9 @@ class AIClient(BaseAIClient):
                  max_tokens: int, image: Optional[str]) -> str:
         """Sync generation implementation."""
         url = f"{self.base_url}/api/chat"
-        payload, chat = asyncio.run(self._prepare_payload(message, agent, model, max_tokens, image))
+        if image is not None:
+            image = image_to_base64(image)
+        payload, chat = self._prepare_payload(message, agent, model, max_tokens, image)
 
         self._log(f"Sending request to {url}", LogType.REQUEST)
         response = requests.post(url, headers=self.headers, json=payload)

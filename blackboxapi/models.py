@@ -145,51 +145,39 @@ class Chat:
         }
         logger.debug(f"Created new chat session with ID: {self.chat_id}")
 
-    def add_message(self, content: str, role: str, image: Optional[str] = None) -> Message:
-        """Add a new message to the chat history.
-        
-        Args:
-            content (str): The message content
-            role (str): The role of the message sender
-            
-        Returns:
-            Message: The created message object
-            
-        Raises:
-            ValueError: If content is empty or role is invalid
-        """
-        if not content.strip():
-            raise ValueError("Message content cannot be empty")
-        if role not in ["user", "assistant"]:
-            raise ValueError("Invalid message role")
-
-        message = Message(content=content, role=role, id=str(uuid.uuid4()), image=image)
+    def add_message(self, content: str, role: str, image: Optional[str] = None) -> None:
+        """Add a message to the chat history synchronously."""
+        message = Message(content=content, role=role, image=image)
         self.messages.append(message)
-        self.metadata.update({
-            "message_count": len(self.messages),
-            "last_updated": datetime.utcnow().isoformat()
-        })
-        
         if self.database:
             self.database.save_chat(self)
-            
-        logger.debug(f"Added {role} message to chat {self.chat_id}")
-        return message
+
+    async def add_message_async(self, content: str, role: str, image: Optional[str] = None) -> None:
+        """Add a message to the chat history asynchronously."""
+        message = Message(content=content, role=role, image=image)
+        self.messages.append(message)
+        if self.database:
+            await self.database.save_chat_async(self)
 
     def get_messages(self) -> List[Message]:
-        """Get all messages in the chat history.
-        
-        Returns:
-            List[Message]: List of all messages in chronological order
-        """
+        """Get chat messages synchronously."""
+        return list(self.messages)
+
+    async def get_messages_async(self) -> List[Message]:
+        """Get chat messages asynchronously."""
         return list(self.messages)
 
     def clear_history(self) -> None:
-        """Clear all messages from the chat history."""
+        """Clear chat history synchronously."""
         self.messages.clear()
-        self.metadata["message_count"] = 0
-        self.metadata["last_updated"] = datetime.utcnow().isoformat()
-        logger.info(f"Cleared history for chat {self.chat_id}")
+        if self.database:
+            self.database.save_chat(self)
+
+    async def clear_history_async(self) -> None:
+        """Clear chat history asynchronously."""
+        self.messages.clear()
+        if self.database:
+            await self.database.save_chat_async(self)
 
     async def get_messages_async(self) -> List[Message]:
         """Get chat messages asynchronously."""
