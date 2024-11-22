@@ -516,7 +516,7 @@ class AIClient(BaseAIClient):
         if image is not None:
             image = image_to_base64(image)
         payload, chat = self._prepare_payload(message, agent, model, max_tokens, image)
-        
+
         self._log(f"Sending request to {url}", LogType.REQUEST)
         response = requests.post(url, headers=self.headers, json=payload)
         
